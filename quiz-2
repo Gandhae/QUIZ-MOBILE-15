@@ -1,0 +1,215 @@
+class HalamanPertama extends StatelessWidget {
+ @override
+ Widget build(BuildContext context) {
+	return Scaffold(
+		appBar: AppBar(
+			title: Text('Halaman Pertama'),
+	),
+	body: Center(
+		child: ListView(
+			children: <Widget>[
+				RaisedButton(
+				 child: Text('Pindah Halaman Kedua'),
+				 onPressed: () {
+					Navigator.pushNamed(context, HalamanKedua.routeName);
+				 },
+				),
+				RaisedButton(
+				 child: Text ('Pindah Halaman Ketiga'),
+				 onPressed: () {
+					Navigator.pushReplacementNamed(context, HalamanKetiga
+
+
+      							 },
+     						 ),
+    		 			],	
+  	 			 ),
+  			 ),
+  		);
+ 	}
+}
+		
+
+class HalamanKedua extends StatelessWidget {
+
+static const String routeName = "/halamanKedua";
+ @override
+ Widget build(BuildContex context) {
+	return Scaffold(
+		appBar: AppBar(
+			title: Text("Halaman Kedua"),
+		),
+		body: Center(
+			child: RaisedButton(
+				child: Text('Kembali'),
+			onPressed: () {
+				Navigator.pop(context);
+		},
+	    ),
+	 ),
+      );
+   }
+}
+
+
+class HalamanKetiga extends StatelessWidget {
+ static const String routeName = "/halaman Ketiga";
+ @override
+ Widget build(BuildContext context) {
+	return Scaffold(
+		appBar: AppBar(
+			title: Text("Halaman Ketiga"),
+		),
+		body: Center(
+			child: Text('Halaman Ketiga'),
+			),
+		);
+	}
+}
+
+
+{
+        "id":ikanayam,
+        "name":"alexander",
+        "address":"Tanjung morawa, medan  "
+    }
+
+{
+        "id":ikanayim,
+        "name":"kouper"
+    }
+
+
+class UserQuery {
+  static const String TABLE_NAME = "users";
+  static const String CREATE_TABLE =
+      " CREATE TABLE IF NOT EXISTS $TABLE_NAME ( id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT , address TEXT ) ";
+  static const String SELECT = "select * from $TABLE_NAME";
+}
+
+class User {
+    String address;
+    int id;
+    String name;
+
+    User({this.address, this.id, this.name});
+
+    factory User.fromJson(Map<String, dynamic> json) {
+        return User(
+            address: json['address'], 
+            id: json['id'], 
+            name: json['name'], 
+        );
+    }
+
+    Map<String, dynamic> toJson() {
+        final Map<String, dynamic> data = new Map<String, dynamic>();
+        data['address'] = this.address;
+        data['id'] = this.id;
+        data['name'] = this.name;
+        return data;
+    }
+}
+
+class CountryQuery {
+  static const String TABLE_NAME = "countries";
+  static const String CREATE_TABLE =
+      " CREATE TABLE IF NOT EXISTS $TABLE_NAME ( id INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT ) ";
+  static const String SELECT = "select * from $TABLE_NAME";
+}
+
+class Country {
+    int id;
+    String name;
+
+    Country({this.id, this.name});
+
+    factory Country.fromJson(Map<String, dynamic> json) {
+        return Country(
+            id: json['id'], 
+            name: json['NAME'],
+        );
+    }
+
+    Map<String, dynamic> toJson() {
+        final Map<String, dynamic> data = new Map<String, dynamic>();
+        data['id'] = this.id;
+        data['NAME'] = this.name;
+        return data;
+    }
+}
+
+import 'package:flutter_atomic_design/database/queries/country_query.dart';
+import 'package:flutter_atomic_design/database/queries/user_query.dart';
+import 'package:sqflite/sqflite.dart' as sqlite;
+import 'package:sqflite/sqlite_api.dart';
+import 'package:path/path.dart' as path;
+
+class DbHelper {
+  //membuat method singleton
+  static DbHelper _dbHelper = DbHelper._singleton();
+
+  factory DbHelper() {
+    return _dbHelper;
+  }
+
+  DbHelper._singleton();
+
+  //baris terakhir singleton
+
+  final tables = [
+    UserQuery.CREATE_TABLE,
+    CountryQuery.CREATE_TABLE
+  ]; // membuat daftar table yang akan dibuat
+
+  Future<Database> openDB() async {
+    final dbPath = await sqlite.getDatabasesPath();
+    return sqlite.openDatabase(path.join(dbPath, 'thengoding.db'),
+        onCreate: (db, version) {
+      tables.forEach((table) async {
+        await db.execute(table).then((value) {
+          print("berashil ");
+        }).catchError((err) {
+          print("errornya ${err.toString()}");
+        });
+      });
+      print('Table Created');
+    }, version: 1);
+  }
+
+  insert(String table, Map<String, Object> data) {
+    openDB().then((db) {
+      db.insert(table, data, conflictAlgorithm: ConflictAlgorithm.replace);
+    }).catchError((err) {
+      print("error $err");
+    });
+  }
+
+  Future<List> getData(String tableName) async {
+    final db = await openDB();
+    var result = await db.query(tableName);
+    return result.toList();
+  }
+}
+
+ final DbHelper _helper = new DbHelper();
+  @override
+  void initState() {
+    super.initState();
+    _helper.insert(CountryQuery.TABLE_NAME, {"NAME":"Singapura"});
+  }
+
+ final DbHelper _helper = new DbHelper();
+
+  @override
+  void initState() {
+    super.initState();
+    // _helper.openDB();
+    // _helper.insert(CountryQuery.TABLE_NAME, {"NAME":"Singapura"});
+    _helper.getData(CountryQuery.TABLE_NAME).then((value) {
+      value.forEach((element) {
+        Country country = Country.fromJson(element);
+        print(country.toJson());
+      });
+    });
+  }
